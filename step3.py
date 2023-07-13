@@ -27,6 +27,8 @@ def tree_var(tree, name, shape, npvartype, rootvartype):
   tree.Branch(name, var, f"{name}{shape_str}/{rootvartype}")
   return var
 
+ROOT.gErrorIgnoreLevel = ROOT.kFatal
+
 parser = argparse.ArgumentParser(description='Online monitor and reconstruction for crilin July')
 
 parser.add_argument('infile', type=str, help='Input file name .root')
@@ -64,8 +66,9 @@ parser.add_argument('--lpfreq', type=float, help='Low pass filter cut frequency 
 parser.add_argument('--pseudotime_cf', type=float, help='Low pass filter cut frequency (GHz)', default=0.11)
 
 args = parser.parse_args()
-
-vars().update(vars(args))
+v = vars(args)
+print(v)
+vars().update(v)
 
 outfile = args.outfile
 
@@ -94,7 +97,7 @@ tree_vars.update({
   "timePeak": tree_var(tree, "timePeak", std_shape, np.float32, "F"),
   "timeAve": tree_var(tree, "timeAve", std_shape, np.float32, "F"),
   "wave": tree_var(tree, "wave", (*std_shape, nsamples), np.float32, "F"),
-  "unfiltered_wave": tree_var(tree, "wave", (*std_shape, nsamples), np.float32, "F"),
+  "unfiltered_wave": tree_var(tree, "unfiltered_wave", (*std_shape, nsamples), np.float32, "F"),
   "tWave": tree_var(tree, "tWave", (nsamples,), np.float32, "F"),
   "chi2_zerocr": tree_var(tree, "chi2_zerocr", std_shape, np.float32, "F"),
   "time_zerocr": tree_var(tree, "time_zerocr", std_shape, np.float32, "F"),
@@ -103,7 +106,7 @@ tree_vars.update({
   "time_pseudotime": tree_var(tree, "time_pseudotime", std_shape, np.float32, "F"),
 })
 
-B_pb, A_pb = butter(4, [0.15], fs=5)
+B_pb, A_pb = butter(2, [lpfreq], fs=5)
 
 if args.chs != 0:
   chlist = [int(i) for i in args.chs.strip('][').split(', ')]
@@ -197,7 +200,6 @@ for ev in tqdm(range(maxevents)):
 
       novalidrise = 0
       if len(monotone_rise_ind) == 0:
-        print(f"len salita <= {rise_min_points}")
         novalidrise = 1
 
         tree_vars.ampPeak[board][ch] = -99
@@ -224,7 +226,6 @@ for ev in tqdm(range(maxevents)):
           tend_zerocr = monotone_rise_t[monotone_rise_amp>cf*tree_vars.ampPeak[board][ch]][0]
         except IndexError:
           if check_zerocr: no_zerocr = 1
-          print("error reco-ing tstart_zerocr or tend_zerocr")
         else:
           func = ROOT.TF1("func", "pol1", tstart_zerocr, tend_zerocr)
 
