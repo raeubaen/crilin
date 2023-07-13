@@ -189,12 +189,9 @@ for ev in tqdm(range(maxevents)):
       tree_vars.pedestal[board][ch] = temp_pedestal
       tree_vars.charge[board][ch] = temp_charge
 
-      tree_vars.ampPeak[board][ch] = monotone_rise_amp.max()
-      tree_vars.timePeak[board][ch] = monotone_rise_t[monotone_rise_amp.argmax()]
-
       tree_vars.timeAve[board][ch] = (signal_amp*signal_t).sum() / signal_amp.sum()
       tree_vars.wave[board, ch, :] = amp
-      tree_vars.tWave = t
+      tree_vars.tWave[:] = t
 
 
       novalidrise = 0
