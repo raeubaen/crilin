@@ -116,6 +116,7 @@ for ev in tqdm(range(maxevents)):
 
   to_discard = 1
   ev += offset
+
   zero_all_vars(tree_vars)
   tree_vars.evnum[0] = ev
 
