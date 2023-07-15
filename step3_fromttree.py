@@ -1,14 +1,11 @@
 # Reconstruction for crilin July (RawHisto output of Padme DAQ)
 import json
 import sys
-import pandas as pd
 import ROOT
-from tqdm import tqdm
 import numpy as np
 import argparse
 import time
 from scipy.signal import filtfilt, butter
-import uproot
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -23,8 +20,8 @@ def zero_all_vars(vars):
 def tree_var(tree, name, shape, npvartype, rootvartype):
   dtype = npvartype
   var = np.zeros(shape, dtype=dtype)
-  shape_str = "".join([f"[{i}]" for i in shape])
-  tree.Branch(name, var, f"{name}{shape_str}/{rootvartype}")
+  shape_str = "".join(["[%i]"%i for i in shape])
+  tree.Branch(name, var, "%s%s/%s"%(name,shape_str,rootvartype))
   return var
 
 ROOT.gErrorIgnoreLevel = ROOT.kFatal
@@ -34,6 +31,8 @@ parser = argparse.ArgumentParser(description='Online monitor and reconstruction 
 parser.add_argument('infile', type=str, help='Input file name .root')
 parser.add_argument('outfile', type=str, help='outfile', default="")
 parser.add_argument('label', type=str, help='label', default="")
+parser.add_argument('--offset', type=int, help='Start event number', default=0)
+parser.add_argument('--pythonversion', type=int, help='Python 2/3', default=3)
 parser.add_argument('--maxevents', type=int, help='Number of events', default=100000)
 parser.add_argument('--nsamples', type=int, help='Nsamples per waveform', default=1000)
 parser.add_argument('--samplingrate', type=int, help='GHz sampling rate', default=5)
@@ -82,7 +81,7 @@ outf.cd()
 tree = ROOT.TTree("tree", "tree")
 tree.SetAutoSave(1000)
 
-with open(f"{outfile.replace('root', 'json')}", 'w') as fp:
+with open("%s"%outfile.replace('root', 'json'), 'w') as fp:
     json.dump(vars(args), fp)
 
 std_shape = (boardsnum, chsnum+4)
@@ -97,8 +96,8 @@ tree_vars.update({
   "ampPeak": tree_var(tree, "ampPeak", std_shape, np.float32, "F"),
   "timePeak": tree_var(tree, "timePeak", std_shape, np.float32, "F"),
   "timeAve": tree_var(tree, "timeAve", std_shape, np.float32, "F"),
-  "wave": tree_var(tree, "wave", (*std_shape, nsamples), np.float32, "F"),
-  "unfiltered_wave": tree_var(tree, "unfiltered_wave", (*std_shape, nsamples), np.float32, "F"),
+  "wave": tree_var(tree, "wave", (std_shape[0], std_shape[1], nsamples), np.float32, "F"),
+  "unfiltered_wave": tree_var(tree, "unfiltered_wave", (std_shape[0], std_shape[1], nsamples), np.float32, "F"),
   "tWave": tree_var(tree, "tWave", (nsamples,), np.float32, "F"),
   "chi2_zerocr": tree_var(tree, "chi2_zerocr", std_shape, np.float32, "F"),
   "time_zerocr": tree_var(tree, "time_zerocr", std_shape, np.float32, "F"),
@@ -109,7 +108,7 @@ tree_vars.update({
   "time_trig": tree_var(tree, "time_trig", (boardsnum, 4), np.float32, "F"),
 })
 
-B_pb, A_pb = butter(2, [lpfreq], fs=5)
+B_pb, A_pb = butter(2, [lpfreq/(samplingrate/2.)])
 
 if args.chs != 0:
   chlist = [int(i) for i in args.chs.strip('][').split(', ')]
@@ -130,14 +129,13 @@ novalidrise = 0
 failed = 0
 no_zerocr = 0
 
-for ev, entry in tqdm(enumerate(intree)):
+for ev in range(maxevents):
+  intree.GetEntry(ev+offset)
+  if ev%int(maxevents/10)==0:
+    print("Event: %i"%ev)
 
-
-  if ev>maxevents: break
   to_discard = 1
-
   zero_all_vars(tree_vars)
-
   tree_vars.evnum[0] = ev
 
   for board in range(boardsnum):
@@ -147,9 +145,9 @@ for ev, entry in tqdm(enumerate(intree)):
       if board == 0 and ch in [18, 19, 20]: mult = -1
 
       if ch>=chsnum:
-        amp = np.asarray(entry.WavesTrig)[nsamples*4*board + (ch-chsnum)*nsamples : nsamples*4*board + (ch-chsnum+1)*nsamples]
+        amp = np.asarray(intree.WavesTrig)[nsamples*4*board + (ch-chsnum)*nsamples : nsamples*4*board + (ch-chsnum+1)*nsamples]
       else:
-        amp = np.asarray(entry.Waves)[nsamples*chsnum*board + ch*nsamples:nsamples*chsnum*board + (ch+1)*nsamples]
+        amp = np.asarray(intree.Waves)[nsamples*chsnum*board + ch*nsamples:nsamples*chsnum*board + (ch+1)*nsamples]
 
       #if sui canali trigger (ultimi 4 come numeri ma primi 4 del loop)
         #calcola le variabili per-chip che poi salva nell'albero e usa dopo per tutti gli altri canali
@@ -257,15 +255,22 @@ for ev, entry in tqdm(enumerate(intree)):
 
           wsp = ROOT.TSpline5("wsp", g);
 
-          spf = lambda x, par: wsp.Eval(x[0])
+          if pythonversion==3:
+            spf = lambda x, par: wsp.Eval(x[0])
+          else:
+            spf = lambda x: wsp.Eval(x[0])
           sptf1 = ROOT.TF1("spf", spf, tstart_zerocr-20, tend_zerocr);
 
-          if ch >= chsnum: x_pseudot = sptf1.GetX(thr)
-          else: x_pseudot = sptf1.GetX(pseudotime_cf*tree_vars.ampPeak[board][ch])
+          try:
+            if ch >= chsnum: x_pseudot = sptf1.GetX(thr)
+            else: x_pseudot = sptf1.GetX(pseudotime_cf*tree_vars.ampPeak[board][ch])
 
-          if ROOT.TMath.IsNaN(x_pseudot):
-            x_pseudot = -99
-            if check_timing: failed = 1
+            if ROOT.TMath.IsNaN(x_pseudot):
+              x_pseudot = -99
+              if check_timing: failed = 1
+          except:
+              x_pseudot = -99
+              if check_timing: failed = 1
 
           tree_vars.time_pseudotime[board][ch] = x_pseudot
           if ch >= chsnum: tree_vars.time_trig[board][ch-chsnum] = x_pseudot
