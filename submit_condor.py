@@ -9,6 +9,8 @@ parser.add_argument('label', type=str, help='label', default="")
 parser.add_argument('fb', type=int, help='Front board (0/1)', default=0)
 parser.add_argument('nevents_per_job', type=int, help='nevents_per_job', default=200)
 parser.add_argument('njobs', type=int, help='njobs', default=500)
+parser.add_argument('--mainfolder', type=str, help="Folder where crilin_input, the repo directory and reco_data are placed", default='/afs/cern.ch/work/r/rgargiul/')
+parser.add_argument('--repofolder', type=str, help="Name of the folder with the repo", default='code_reco')
 
 args = parser.parse_args()
 v = vars(args)
