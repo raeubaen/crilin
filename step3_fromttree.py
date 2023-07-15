@@ -136,7 +136,7 @@ for ev in range(maxevents):
 
   to_discard = 1
   zero_all_vars(tree_vars)
-  tree_vars.evnum[0] = ev
+  tree_vars.evnum[0] = ev+offset
 
   for board in range(boardsnum):
     for ch in chiter:

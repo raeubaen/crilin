@@ -1,0 +1,7 @@
+executable            = /afs/cern.ch/work/r/rgargiul/code_reco/condorjob.sh
+arguments             = $(ClusterId) $(ProcId) $nrun $label $fb $nevents_per_job
+input                 = /afs/cern.ch/work/r/rgargiul/code_reco/input
+output                = /afs/cern.ch/work/r/rgargiul/reco_data/$nrun/output/output.$(ClusterId).$(ProcId).out
+error                 = /afs/cern.ch/work/r/rgargiul/reco_data/$nrun/error/error.$(ClusterId).$(ProcId).err
+log                   = /afs/cern.ch/work/r/rgargiul/reco_data/$nrun/log/log.$(ClusterId).log
+queue $njobs
