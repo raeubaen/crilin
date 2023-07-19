@@ -1,5 +1,6 @@
 #INCOMPLETOOOOOOOOOOOOO
 
+import os
 import sys
 import pandas as pd
 import argparse
@@ -21,7 +22,7 @@ vars().update(v)
 def reco(row):
   cmd = f"python3 submit_condor.py {row.nrun} {row.nrun} {row.board} {row.timeoffset} {nevents_per_job} {njobs} --rootinputfolder {rootinputfolder} --condorfolder {condorfolder} --rootoutfolder {rootoutfolder}"
   print(cmd)
-  #os.system(cmd)
+  os.system(cmd)
 
 df = pd.read_csv(mapfile, sep=" ", header=None)
 df.columns = ["nrun", "board", "timeoffset"]
