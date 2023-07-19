@@ -1,5 +1,5 @@
 executable            = condorjob.sh
-arguments             = $(ClusterId) $(ProcId) $nrun $label $fb $nevents_per_job $rootinputfolder $rootoutputfolder
+arguments             = $(ClusterId) $(ProcId) $nrun $label $fb $timeoffset $nevents_per_job $rootinputfolder $rootoutputfolder
 input                 = input
 output                = $condorfolder/$nrun/output/output.$(ClusterId).$(ProcId).out
 error                 = $condorfolder/$nrun/error/error.$(ClusterId).$(ProcId).err

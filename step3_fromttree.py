@@ -1,4 +1,4 @@
-# Reconstruction for crilin July (RawHisto output of Padme DAQ)
+# Reconstruction for crilin July ("Elisa" output of Padme DAQ)
 import json
 import sys
 import ROOT
@@ -32,6 +32,7 @@ parser.add_argument('infile', type=str, help='Input file name .root')
 parser.add_argument('outfile', type=str, help='outfile', default="")
 parser.add_argument('label', type=str, help='label', default="")
 parser.add_argument('frontboard', type=int, help='Board. in front', default=0)
+parser.add_argument('timeoffset', type=float, help='time offset (ns)', default=0)
 parser.add_argument('--offset', type=int, help='Start event number', default=0)
 parser.add_argument('--pythonversion', type=int, help='Python 2/3', default=3)
 parser.add_argument('--maxevents', type=int, help='Number of events', default=100000)
@@ -39,32 +40,43 @@ parser.add_argument('--nsamples', type=int, help='Nsamples per waveform', defaul
 parser.add_argument('--samplingrate', type=int, help='GHz sampling rate', default=5)
 parser.add_argument('--boardsnum', type=int, help='Number of boards', default=2)
 parser.add_argument('--chsnum', type=int, help='Number of channels per board', default=21)
-parser.add_argument('--signalstart', type=int, help='Signal start (ADC ticks)', default=20)
-parser.add_argument('--signalend', type=int, help='Signal end (ADC ticks)', default=190)
-parser.add_argument('--debug', type=int, help='Plot zero-crossing check plots', default=0)
-parser.add_argument('--chs', type=str, help='reco only ch list es. [1, 2, 3, 4]', default=0)
-parser.add_argument('--zerocr_thr', type=float, help='Zerocr threshold', default=2)
-parser.add_argument('--zerocr_cf', type=float, help='Zerocr CF', default=0.65)
-parser.add_argument('--cindyzerocr_thr', type=float, help='Zerocr threshold', default=40)
-parser.add_argument('--cindyzerocr_cf', type=float, help='Zerocr CF', default=0.85)
-parser.add_argument('--trigger_thr', type=float, help='Zerocr threshold', default=70)
-parser.add_argument('--check_timing', type=int, help='Zerocr Check if fails', default=0)
-parser.add_argument('--lpfilter', type=int, help='150 MHz 4-order Butterworth active', default=1)
-parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge btw -110 and -40 (modifiable)', default=1)
-parser.add_argument('--cindylowcut', type=float, help='Cindy low cut (def. 90 pC) on (Q1+Q2)/2', default=10)
-parser.add_argument('--cindyhighcut', type=float, help='Cindy high cut (def. 10 pC) on (Q1+Q2)/2', default=90)
+parser.add_argument('--seriessignalstart', type=int, help='Series Signal start (ns)', default=20)
+parser.add_argument('--seriessignalend', type=int, help='Series Signal end (ns)', default=100)
+parser.add_argument('--parallelsignalstart', type=int, help='Series Signal start (ns)', default=20)
+parser.add_argument('--parallelsignalend', type=int, help='Series Signal end (ns)', default=190)
+parser.add_argument('--cindysignalstart', type=int, help='Series Signal start (ns)', default=35)
+parser.add_argument('--cindysignalend', type=int, help='Series Signal end (ns)', default=85)
+parser.add_argument('--triggersignalstart', type=int, help='Series Signal start (ns)', default=140)
+parser.add_argument('--triggersignalend', type=int, help='Series Signal end (ns)', default=175)
+parser.add_argument('--debug', type=int, help='Plot all check plots', default=0)
+parser.add_argument('--chs', type=str, help='reco only ch list es. "[1, 2, 3, 4]"', default=0)
+parser.add_argument('--zerocr_thr', type=float, help='Zerocr threshold for fit start', default=2)
+parser.add_argument('--zerocr_cf', type=float, help='Zerocr CF for fit end', default=0.65)
+parser.add_argument('--cindyzerocr_thr', type=float, help='Zerocr threshold for fit start', default=20)
+parser.add_argument('--cindyzerocr_cf', type=float, help='Zerocr CF for fit end', default=0.85)
+parser.add_argument('--trigger_thr_start', type=float, help='Fixed threshold for trigger timing (start) mV', default=50)
+parser.add_argument('--trigger_thr_end', type=float, help='Fixed threshold for trigger timing (end) mV', default=250)
+parser.add_argument('--check_timing', type=int, help='Plot if timing fails', default=0)
+parser.add_argument('--lpfilter', type=int, help='2-order Butterworth active', default=1)
+parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge mean btw 10 and 90 (modifiable)', default=1)
+parser.add_argument('--cindylowcut', type=float, help='Cindy low cut (def. 35 pC) on (Q1+Q2)/2', default=35)
+parser.add_argument('--cindyhighcut', type=float, help='Cindy high cut (def. 80 pC) on (Q1+Q2)/2', default=80)
 parser.add_argument('--charge_thr_for_crilin', type=float, help='Charge thr on crilin channels', default=6)
-parser.add_argument('--random_trg', type=int, help='Random Trigger', default=0)
-parser.add_argument('--rise_window_end', type=float, help='End of window where signal rise is accepted', default=60)
-parser.add_argument('--rise_window_start', type=float, help='Start of window where signal rise is accepted', default=20)
+parser.add_argument('--crilin_rise_window_end', type=float, help='End of window where signal rise is accepted', default=60)
+parser.add_argument('--crilin_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=20)
 parser.add_argument('--cindy_rise_window_end', type=float, help='End of window where signal rise is accepted', default=75)
 parser.add_argument('--cindy_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=35)
 parser.add_argument('--trigger_rise_window_end', type=float, help='End of window where signal rise is accepted', default=170)
 parser.add_argument('--trigger_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=150)
 parser.add_argument('--rise_min_points', type=int, help='Minimium number of points in the monotonic rise to accept the event', default=8)
 parser.add_argument('--timingwithoutfilter', type=float, help='timingwithoutfilter', default=0)
-parser.add_argument('--lpfreq', type=float, help='Low pass filter cut frequency (GHz)', default=0.5)
-parser.add_argument('--pseudotime_cf', type=float, help='Low pass filter cut frequency (GHz)', default=0.11)
+parser.add_argument('--serieslpfreq', type=float, help='Series Low pass filter cut frequency (GHz)', default=0.5)
+parser.add_argument('--parallellpfreq', type=float, help='Parallel Low pass filter cut frequency (GHz)', default=0.25)
+parser.add_argument('--cindylpfreq', type=float, help='Cindy Low pass filter cut frequency (GHz)', default=0.5)
+parser.add_argument('--triggerlpfreq', type=float, help='Trigger Low pass filter cut frequency (GHz)', default=0.5)
+parser.add_argument('--seriespseudotime_cf', type=float, help='Pseudotime CF', default=0.11)
+parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF', default=0.14)
+parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', default=0.05)
 parser.add_argument('--zerocr', type=int, help='Evaluate Zerocrossing time', default=1)
 
 args = parser.parse_args()
@@ -72,16 +84,12 @@ v = vars(args)
 print(v)
 vars().update(v)
 
-outfile = args.outfile
-
-bline_t_start = 0; bline_t_end = signalstart
-
 outf = ROOT.TFile(outfile, "RECREATE")
 outf.cd()
 tree = ROOT.TTree("tree", "tree")
 tree.SetAutoSave(1000)
 
-with open("%s"%outfile.replace('root', 'json'), 'w') as fp:
+with open("%s"%outfile.replace('.root', '.json'), 'w') as fp:
     json.dump(vars(args), fp)
 
 std_shape = (boardsnum, chsnum+4)
@@ -96,6 +104,7 @@ tree_vars.update({
   "ampPeak": tree_var(tree, "ampPeak", std_shape, np.float32, "F"),
   "timePeak": tree_var(tree, "timePeak", std_shape, np.float32, "F"),
   "timeAve": tree_var(tree, "timeAve", std_shape, np.float32, "F"),
+  "savewave": tree_var(tree, "savewave", (1,), np.int32, "I"),
   "wave": tree_var(tree, "wave", (std_shape[0], std_shape[1], nsamples), np.float32, "F"),
   "unfiltered_wave": tree_var(tree, "unfiltered_wave", (std_shape[0], std_shape[1], nsamples), np.float32, "F"),
   "tWave": tree_var(tree, "tWave", (nsamples,), np.float32, "F"),
@@ -106,9 +115,9 @@ tree_vars.update({
   "time_pseudotime": tree_var(tree, "time_pseudotime", std_shape, np.float32, "F"),
   "time_pseudotime_corr": tree_var(tree, "time_pseudotime_corr", std_shape, np.float32, "F"),
   "time_trig": tree_var(tree, "time_trig", (boardsnum, 4), np.float32, "F"),
+  "centroid_x": tree_var(tree, "centroid_x", (1,), np.float32, "F"),
+  "centroid_y": tree_var(tree, "centroid_y", (1,), np.float32, "F"),
 })
-
-B_pb, A_pb = butter(2, [lpfreq/(samplingrate/2.)])
 
 if args.chs != 0:
   chlist = [int(i) for i in args.chs.strip('][').split(', ')]
@@ -131,38 +140,75 @@ no_zerocr = 0
 
 for ev in range(maxevents):
   intree.GetEntry(ev+offset)
-  if ev%int(maxevents/10)==0:
-    print("Event: %i"%ev)
 
+  
   to_discard = 1
   zero_all_vars(tree_vars)
+
+  if ev%int(maxevents/100)==0:
+    print("Event: %i"%ev)
+    if np.random.uniform() < 0.1:
+      tree_vars.savewave[0] = 1
+      
   tree_vars.evnum[0] = ev+offset
 
   for board in range(boardsnum):
-    for ch in chiter:
+    for ch in chiter: # makes trigger channels before
 
       if ch==18: continue
-      if board == 0 and ch in [18, 19, 20]: mult = -1
 
-      if ch>=chsnum:
+      if ch >= chsnum:
+        B_pb, A_pb = butter(2, [triggerlpfreq/(samplingrate/2.)])
+        signalstart = triggersignalstart + timeoffset
+        signalend = triggersignalend + timeoffset
+        rise_window_start = trigger_rise_window_start + timeoffset
+        rise_window_end = trigger_rise_window_end + timeoffset
+        thr = trigger_thr_start
         amp = np.asarray(intree.WavesTrig)[nsamples*4*board + (ch-chsnum)*nsamples : nsamples*4*board + (ch-chsnum+1)*nsamples]
       else:
         amp = np.asarray(intree.Waves)[nsamples*chsnum*board + ch*nsamples:nsamples*chsnum*board + (ch+1)*nsamples]
+        if ch in [19, 20]:
+          B_pb, A_pb = butter(2, [cindylpfreq/(samplingrate/2.)])
+          signalstart = cindysignalstart + timeoffset
+          signalend = cindysignalend + timeoffset
+          pseudotime_cf = cindypseudotime_cf
+          rise_window_start = cindy_rise_window_start + timeoffset
+          rise_window_end = cindy_rise_window_end + timeoffset
+          thr, cf = cindyzerocr_thr, cindyzerocr_cf
+        else:
+          if board==0:
+            B_pb, A_pb = butter(2, [serieslpfreq/(samplingrate/2.)])
+            signalstart = seriessignalstart + timeoffset
+            signalend = seriessignalend + timeoffset
+            pseudotime_cf = seriespseudotime_cf
+            rise_window_start = crilin_rise_window_start + timeoffset
+            rise_window_end = crilin_rise_window_end + timeoffset
+            thr, cf = zerocr_thr, zerocr_cf
+          else:
+            B_pb, A_pb = butter(2, [parallellpfreq/(samplingrate/2.)])
+            signalstart = parallelsignalstart + timeoffset
+            signalend = parallelsignalend + timeoffset
+            pseudotime_cf = parallelpseudotime_cf
+            rise_window_start = crilin_rise_window_start + timeoffset
+            rise_window_end = crilin_rise_window_end + timeoffset
+            rise_ind = np.logical_and(t>rise_window_start, t<rise_window_end)
+            thr, cf = zerocr_thr, zerocr_cf
 
-      #if sui canali trigger (ultimi 4 come numeri ma primi 4 del loop)
-        #calcola le variabili per-chip che poi salva nell'albero e usa dopo per tutti gli altri canali
 
       virgin_amp = amp.copy()
 
       if lpfilter:
         amp = filtfilt(B_pb, A_pb, amp)
 
+      bline_t_start = 0; bline_t_end = signalstart
+
       pre_signal_index = np.logical_and(t > bline_t_start, t < bline_t_end)
-      if np.sum(pre_signal_index) == 0:
+      if np.sum(pre_signal_index) == 0: #for safety
         continue
       pre_signal_amp = amp[pre_signal_index]
       temp_pre_signal_bline = 0
       temp_pre_signal_rms = pre_signal_amp.std()
+
       temp_pedestal = pre_signal_amp[:-1].sum()  / (50 * samplingrate) / (signalstart-1) * (signalend - signalstart)
 
       signal_index = np.logical_and(t > signalstart, t < signalend)
@@ -171,26 +217,11 @@ for ev in range(maxevents):
 
       temp_charge = signal_amp.sum()  / (50 * samplingrate) # V * ns * 1e3 / ohm = pC
 
-      if temp_charge < charge_thr_for_crilin:
+      if temp_charge < charge_thr_for_crilin or temp_pre_signal_rms > 1.5:
         continue
       else:
-        to_discard = 0
-
-      if ch in [19, 20]:
-        rise_ind = np.logical_and(t>cindy_rise_window_start, t<cindy_rise_window_end)
-        thr, cf = cindyzerocr_thr, cindyzerocr_cf
-      elif ch >= chsnum:
-        rise_ind = np.logical_and(t>trigger_rise_window_start, t<trigger_rise_window_end)
-        thr = trigger_thr
-      else:
-        rise_ind = np.logical_and(t>rise_window_start, t<rise_window_end)
-        thr, cf = zerocr_thr, zerocr_cf
-
-      rise_t = t[rise_ind]
-      rise_amp = amp[rise_ind]
-      overthr_ind = rise_amp > thr
-      rise_t = rise_t[overthr_ind]
-      rise_amp = rise_amp[overthr_ind]
+        if ch <18:
+          to_discard = 0
 
       tree_vars.pre_signal_bline[board][ch] = temp_pre_signal_bline
       tree_vars.pre_signal_rms[board][ch] = temp_pre_signal_rms
@@ -198,12 +229,21 @@ for ev in range(maxevents):
       tree_vars.charge[board][ch] = temp_charge
 
       tree_vars.timeAve[board][ch] = (signal_amp*signal_t).sum() / signal_amp.sum()
-      tree_vars.wave[board, ch, :] = amp
-      tree_vars.tWave[:] = t
+  
+      if tree_vars.savewave:
+        tree_vars.wave[board, ch, :] = amp
+        tree_vars.tWave[:] = t
+        if lpfilter: tree_vars.unfiltered_wave[board, ch, :] = virgin_amp
 
-      if lpfilter: tree_vars.unfiltered_wave[board, ch, :] = virgin_amp
 
       novalidrise = 0
+
+      rise_ind = np.logical_and(t>rise_window_start, t<rise_window_end)
+      rise_t = t[rise_ind]
+      rise_amp = amp[rise_ind]
+      overthr_ind = rise_amp > thr
+      rise_t = rise_t[overthr_ind]
+      rise_amp = rise_amp[overthr_ind]
 
       monotone_rise_ind_groups = np.split(np.arange(len(rise_amp)), np.where(np.diff(rise_amp) < 0)[0]+1)
       monotone_rise_ind = []
@@ -226,13 +266,18 @@ for ev in range(maxevents):
         tree_vars.ampPeak[board][ch] = monotone_rise_amp.max()
         tree_vars.timePeak[board][ch] = monotone_rise_t[monotone_rise_amp.argmax()]
 
-        no_zerocr = 0;
+        no_zerocr = 0
         failed = 0
+        zerocr_func = "pol1"
 
         try:
-          tstart_zerocr = monotone_rise_t[0]
-          if ch >= chsnum: tend_zerocr = monotone_rise_t[0] + 20
-          else: tend_zerocr = monotone_rise_t[monotone_rise_amp>cf*tree_vars.ampPeak[board][ch]][0]
+          if ch >= chsnum: 
+            zerocr_func = "pol2"
+            tstart_zerocr = monotone_rise_t[monotone_rise_amp>trigger_thr_start][0]
+            tend_zerocr = monotone_rise_t[monotone_rise_amp>trigger_thr_end][0]
+          else: 
+            tstart_zerocr = monotone_rise_t[0]
+            tend_zerocr = monotone_rise_t[monotone_rise_amp>cf*tree_vars.ampPeak[board][ch]][0]
         except IndexError:
           if check_timing: no_zerocr = 1
         else:
@@ -242,10 +287,10 @@ for ev in range(maxevents):
             g = ROOT.TGraphErrors(nsamples, t.astype(np.float64), virgin_amp.astype(np.float64), np.zeros(nsamples,), np.ones(nsamples,)*temp_pre_signal_rms)
 
           if zerocr:
-            func = ROOT.TF1("func", "pol1", tstart_zerocr, tend_zerocr)
+            func = ROOT.TF1("func", zerocr_func, tstart_zerocr, tend_zerocr)
             g.Fit(func, "RQ")
             tree_vars.chi2_zerocr[board][ch] = func.GetChisquare()
-            f_recovery = ROOT.TF1("f_recovery", "pol1", tstart_zerocr-50, tend_zerocr)
+            f_recovery = ROOT.TF1("f_recovery", zerocr_func, tstart_zerocr-15, tend_zerocr)
             f_recovery.SetParameters(func.GetParameters())
             x_zerocr = f_recovery.GetX(0)
             if ROOT.TMath.IsNaN(x_zerocr):
@@ -253,13 +298,14 @@ for ev in range(maxevents):
               if check_timing: failed = 1
             tree_vars.time_zerocr[board][ch] = x_zerocr
 
-          wsp = ROOT.TSpline5("wsp", g);
+
+          wsp = ROOT.TSpline5("wsp", g)
 
           if pythonversion==3:
             spf = lambda x, par: wsp.Eval(x[0])
           else:
             spf = lambda x: wsp.Eval(x[0])
-          sptf1 = ROOT.TF1("spf", spf, tstart_zerocr-20, tend_zerocr);
+          sptf1 = ROOT.TF1("spf", spf, tstart_zerocr-5, tend_zerocr);
 
           try:
             if ch >= chsnum: x_pseudot = sptf1.GetX(thr)
@@ -287,6 +333,7 @@ for ev in range(maxevents):
           ", Amppeak: ", tree_vars.ampPeak[board][ch],
           ", ZerocrTime: ", tree_vars.time_zerocr[board][ch],
           ", ZerocrChi2: ", tree_vars.chi2_zerocr[board][ch],
+          ", Pseudotime: ", tree_vars.time_pseudotime[board][ch],
           ", Charge: ", tree_vars.charge[board][ch],
           ", Failed GetX: ", failed,
           ", No_zerocr: ", no_zerocr,
@@ -318,6 +365,16 @@ for ev in range(maxevents):
 
   if not (applysinglepcut and tree_vars.single_e_flag[0]==0):
     if not to_discard:
+      x = np.asarray([int(i/2)%3-1 for i in range(18)])
+      y = np.asarray([int(int(i/2)/3)-1 for i in range(18)])
+      temp_centroid_x, temp_centroid_y = 0, 0
+      for board in range(boardsnum):
+        temp_charge = tree_vars.charge[board][0:18]
+        temp_centroid_x += (x*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
+        temp_centroid_y += (y*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
+      tree_vars.centroid_x[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())
+      tree_vars.centroid_y[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())
+
       tree.Fill()
 
 outf.cd()
