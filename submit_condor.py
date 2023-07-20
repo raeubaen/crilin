@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description='Online monitor and reconstruction 
 parser.add_argument('nrun', type=str, help='nrun (input file name (in "../crilin_input/", without ".root")')
 parser.add_argument('label', type=str, help='label', default="")
 parser.add_argument('fb', type=int, help='Front board (0/1)', default=0)
-parser.add_argument('timeoffset', type=float, help='Time offset (ns)', default=0)
+parser.add_argument('timeoffset', type=int, help='Time offset (ns)', default=0)
 parser.add_argument('nevents_per_job', type=int, help='nevents_per_job', default=200)
 parser.add_argument('njobs', type=int, help='njobs', default=500)
 parser.add_argument('--rootinputfolder', type=str, help="Root input folder", default='/eos/user/r/rgargiul/www/crilin/input/')

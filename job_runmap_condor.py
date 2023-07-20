@@ -20,7 +20,7 @@ print(v)
 vars().update(v)
 
 def reco(row):
-  cmd = f"python3 submit_condor.py {row.nrun} {row.nrun} {row.board} {row.timeoffset} {nevents_per_job} {njobs} --rootinputfolder {rootinputfolder} --condorfolder {condorfolder} --rootoutfolder {rootoutfolder}"
+  cmd = f"python3 submit_condor.py {row.nrun} {row.nrun} {row.board} {int(row.timeoffset)} {nevents_per_job} {njobs} --rootinputfolder {rootinputfolder} --condorfolder {condorfolder} --rootoutfolder {rootoutfolder}"
   print(cmd)
   os.system(cmd)
 
