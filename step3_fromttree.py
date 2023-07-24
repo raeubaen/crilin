@@ -59,8 +59,10 @@ parser.add_argument('--trigger_thr_end', type=float, help='Fixed threshold for t
 parser.add_argument('--check_timing', type=int, help='Plot if timing fails', default=0)
 parser.add_argument('--lpfilter', type=int, help='2-order Butterworth active', default=1)
 parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge mean btw 10 and 90 (modifiable)', default=0)
-parser.add_argument('--cindylowcut', type=float, help='Cindy low cut (def. 35 pC) on (Q1+Q2)/2', default=35)
-parser.add_argument('--cindyhighcut', type=float, help='Cindy high cut (def. 80 pC) on (Q1+Q2)/2', default=80)
+parser.add_argument('--cindylowcut19', type=float, help='Cindy low cut on charge19', default=50)
+parser.add_argument('--cindyhighcut19', type=float, help='Cindy high cut on charge19', default=90)
+parser.add_argument('--cindylowcut20', type=float, help='Cindy low cut on charge20', default=30)
+parser.add_argument('--cindyhighcut20', type=float, help='Cindy high cut on charge20', default=70)
 parser.add_argument('--charge_thr_for_crilin', type=float, help='Charge thr on crilin channels', default=6)
 parser.add_argument('--crilin_rise_window_end', type=float, help='End of window where signal rise is accepted', default=60)
 parser.add_argument('--crilin_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=20)
@@ -78,6 +80,7 @@ parser.add_argument('--seriespseudotime_cf', type=float, help='Pseudotime CF', d
 parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF', default=0.14)
 parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', default=0.05)
 parser.add_argument('--zerocr', type=int, help='Evaluate Zerocrossing time', default=1)
+parser.add_argument('--centroid_square_cut_thr', type=float, help='Threshold in mm on abs centroid x and y', default=2.5)
 
 args = parser.parse_args()
 v = vars(args)
@@ -117,6 +120,7 @@ tree_vars.update({
   "time_trig": tree_var(tree, "time_trig", (boardsnum, 4), np.float32, "F"),
   "centroid_x": tree_var(tree, "centroid_x", (1,), np.float32, "F"),
   "centroid_y": tree_var(tree, "centroid_y", (1,), np.float32, "F"),
+  "centroid_cut_flag": tree_var(tree, "centroid_cut_flag", (1,), np.int32, "I"),
 })
 
 if args.chs != 0:
@@ -356,8 +360,10 @@ for ev in range(maxevents):
 
         input()
 
-    cindymeancharge = (tree_vars.charge[0][19] + tree_vars.charge[0][20])/2
-    tree_vars.single_e_flag[0] = (cindymeancharge < cindyhighcut) and (cindymeancharge > cindylowcut)
+    cindycut19 = (tree_vars.charge[0][19] > cindylowcut19) and (tree_vars.charge[0][19] < cindyhighcut19)
+    cindycut20 = (tree_vars.charge[0][20] > cindylowcut20) and (tree_vars.charge[0][20] < cindyhighcut20)
+
+    tree_vars.single_e_flag[0] = int(cindycut19 and cindycut20)
 
     crilin_charges = tree_vars.charge[board][0:18]
     crilin_charges = crilin_charges[crilin_charges > charge_thr_for_crilin]
@@ -372,9 +378,9 @@ for ev in range(maxevents):
         temp_charge = tree_vars.charge[board][0:18]
         temp_centroid_x += (x*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
         temp_centroid_y += (y*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
-      tree_vars.centroid_x[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())
-      tree_vars.centroid_y[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())
-
+      tree_vars.centroid_x[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())*10
+      tree_vars.centroid_y[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())*10
+      tree_vars.centroid_cut_flag[0] = int( abs(tree_vars.centroid_x[0])<centroid_square_cut_thr and abs(tree_vars.centroid_y[0])<centroid_square_cut_thr )
       tree.Fill()
 
 outf.cd()
