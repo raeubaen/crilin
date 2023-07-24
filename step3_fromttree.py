@@ -58,7 +58,7 @@ parser.add_argument('--trigger_thr_start', type=float, help='Fixed threshold for
 parser.add_argument('--trigger_thr_end', type=float, help='Fixed threshold for trigger timing (end) mV', default=250)
 parser.add_argument('--check_timing', type=int, help='Plot if timing fails', default=0)
 parser.add_argument('--lpfilter', type=int, help='2-order Butterworth active', default=1)
-parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge mean btw 10 and 90 (modifiable)', default=1)
+parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge mean btw 10 and 90 (modifiable)', default=0)
 parser.add_argument('--cindylowcut', type=float, help='Cindy low cut (def. 35 pC) on (Q1+Q2)/2', default=35)
 parser.add_argument('--cindyhighcut', type=float, help='Cindy high cut (def. 80 pC) on (Q1+Q2)/2', default=80)
 parser.add_argument('--charge_thr_for_crilin', type=float, help='Charge thr on crilin channels', default=6)
