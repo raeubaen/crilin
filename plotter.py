@@ -53,6 +53,7 @@ def plot(row, chain, outputfolder):
   c.Write()
   h.Write()
   f.Close()
+  del c
 
 def process(row, outputfolder, plot_df):
   lst = os.popen(f"/bin/bash -c 'ls -1 {row.filename.strip()}'").read().split("\n")
