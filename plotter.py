@@ -51,18 +51,18 @@ def plot(row, chain, outputfolder):
   h.Write()
   f.Close()
 
-def add(chain, row):
+def process(row, outputfolder, plot_df):
   lst = os.popen(f"/bin/bash -c 'ls -1 {row.filename.strip()}'").read().split("\n")
+  chain = ROOT.TChain()
   for file in lst:
     chain.Add(f"{file}/{row.treename.strip()}")
+  os.system(f"mkdir {outputfolder}/{row.label}")
+  plotconf_df.apply(lambda plotrow: plot(plotrow, chain, f"{outputfolder}/{row.label}"), axis=1)
 
 dataconf_df = pd.read_csv(dataconffile, sep=";")
 
 for m in macro: ROOT.gROOT.LoadMacro(m)
 
-chain = ROOT.TChain()
-
-dataconf_df.apply(lambda row: add(chain, row), axis=1)
-
 plotconf_df = pd.read_csv(plotconffile, sep=";")
-plotconf_df.apply(lambda row: plot(row, chain, outputfolder), axis=1)
+
+dataconf_df.apply(lambda row: process(row, outputfolder, plotconf_df), axis=1)
