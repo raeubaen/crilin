@@ -18,13 +18,13 @@ def plot(row, chain, outputfolder):
   f.cd()
   c = ROOT.TCanvas(f"{name}_canvas")
   c.cd()
-  if row.y.strip()=="0":
+  if str(row.y).strip()=="0":
     h = ROOT.TH1F(f"{name}", f"{row.title}", int(row.binsnx), float(row.binsminx), float(row.binsmaxx))
     chain.Draw(f"{row.x}>>{name}", f"{row.cuts}")
     h.SetLineColor(eval(f"ROOT.{row.color}"))
   else:
     h = ROOT.TH2F(f"{name}", f"{row.title}", int(row.binsnx), float(row.binsminx), float(row.binsmaxx), int(row.binsny), float(row.binsminy), float(row.binsmaxy))
-    chain.Draw(f"{row.y}:{row.x}>>{name}", f"{row.cuts}")
+    chain.Draw(f"{row.y}:{row.x}>>{name}", f"{row.cuts}", "zcol")
   h.GetYaxis().SetTitle(f"{row.ylabel}")
   h.GetXaxis().SetTitle(f"{row.xlabel}")
   c.SaveAs(f"{outputfolder}/{name}.png")
