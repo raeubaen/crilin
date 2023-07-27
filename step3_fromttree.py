@@ -81,6 +81,7 @@ parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF',
 parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', default=0.05)
 parser.add_argument('--zerocr', type=int, help='Evaluate Zerocrossing time', default=1)
 parser.add_argument('--centroid_square_cut_thr', type=float, help='Threshold in mm on abs centroid x and y', default=2.5)
+parser.add_argument('--rmscut', type=float, help='cut on pre signal rms (mV)', default=1.5)
 
 args = parser.parse_args()
 v = vars(args)
@@ -142,10 +143,11 @@ novalidrise = 0
 failed = 0
 no_zerocr = 0
 
+maxevents = min(maxevents, intree.GetEntries())
+
 for ev in range(maxevents):
   intree.GetEntry(ev+offset)
 
-  
   to_discard = 1
   zero_all_vars(tree_vars)
 
@@ -221,7 +223,7 @@ for ev in range(maxevents):
 
       temp_charge = signal_amp.sum()  / (50 * samplingrate) # V * ns * 1e3 / ohm = pC
 
-      if temp_charge < charge_thr_for_crilin or temp_pre_signal_rms > 1.5:
+      if temp_charge < charge_thr_for_crilin or temp_pre_signal_rms > rmscut:
         continue
       else:
         if ch <18:
