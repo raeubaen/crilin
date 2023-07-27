@@ -127,6 +127,7 @@ tree_vars.update({
   "centroid_x": tree_var(tree, "centroid_x", (1,), np.float32, "F"),
   "centroid_y": tree_var(tree, "centroid_y", (1,), np.float32, "F"),
   "centroid_cut_flag": tree_var(tree, "centroid_cut_flag", (1,), np.int32, "I"),
+  "front_board": tree_var(tree, "front_board", (1,), np.int32, "I"),
 })
 
 if args.chs != 0:
@@ -149,6 +150,8 @@ failed = 0
 no_zerocr = 0
 
 maxevents = min(maxevents, intree.GetEntries())
+
+tree_vars.front_board[0] = frontboard
 
 for ev in range(maxevents):
   intree.GetEntry(ev+offset)
