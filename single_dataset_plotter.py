@@ -23,7 +23,7 @@ print(v)
 vars().update(v)
 
 
-macro = [] #x elisa: root logon
+macro = ["root_logon.C"] #x elisa: root logon
 
 def plot(row, chain, outputfolder):
   name = row['name']
@@ -39,12 +39,14 @@ def plot(row, chain, outputfolder):
     h = ROOT.TH1F(f"{name}", f"{row.title}", int(row.binsnx), float(row.binsminx), float(row.binsmaxx))
     chain.Draw(f"{row.x}>>{name}", f"{cut}")
     h.SetLineColor(eval(f"ROOT.{row.color}"))
+    binw = (float(row.binsmaxx) - float(row.binsminx))/int(row.binsnx)
+    h.GetYaxis().SetTitle(f"Entries / {float(f'{binw:.1g}'):g} {row.ylabel}")
   else:
     h = ROOT.TH2F(f"{name}", f"{row.title}", int(row.binsnx), float(row.binsminx), float(row.binsmaxx), int(row.binsny), float(row.binsminy), float(row.binsmaxy))
     chain.Draw(f"{row.y}:{row.x}>>{name}", f"{cut}", "zcol")
-  h.GetYaxis().SetTitle(f"{row.ylabel}")
+    h.GetYaxis().SetTitle(f"{row.ylabel}")
   h.GetXaxis().SetTitle(f"{row.xlabel}")
-  c.SaveAs(f"{outputfolder}/{name}.png")
+  c.SaveAs(f"{outputfolder}/{name}.pdf")
   c.Write()
   h.Write()
   f.Close()
@@ -54,7 +56,7 @@ def add(chain, row):
   for file in lst:
     chain.Add(f"{file}/{row.treename.strip()}")
 
-dataconf_df = pd.read_csv(dataconffile)
+dataconf_df = pd.read_csv(dataconffile, sep=";")
 
 for m in macro: ROOT.gROOT.LoadMacro(m)
 
@@ -62,5 +64,5 @@ chain = ROOT.TChain()
 
 dataconf_df.apply(lambda row: add(chain, row), axis=1)
 
-plotconf_df = pd.read_csv(plotconffile)
+plotconf_df = pd.read_csv(plotconffile, sep=";")
 plotconf_df.apply(lambda row: plot(row, chain, outputfolder), axis=1)
