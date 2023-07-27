@@ -36,19 +36,19 @@
    myStyle->SetLabelSize(0.05, "Y");
    myStyle->SetTitleSize(0.05, "Y");
 
-   myStyle->SetTitleOffset(1.0, "Y");
-   myStyle->SetTitleOffset(1.0, "X");
+   myStyle->SetTitleOffset(1.3, "Y");
+   myStyle->SetTitleOffset(1.1, "X");
 
    // default canvas positioning
-   myStyle->SetCanvasDefX(900);
-   myStyle->SetCanvasDefY(20);
-   //myStyle->SetCanvasDefH(550);
-   //myStyle->SetCanvasDefW(540);
+//   myStyle->SetCanvasDefX(900);
+//  myStyle->SetCanvasDefY(20);
+   myStyle->SetCanvasDefH(600);
+   myStyle->SetCanvasDefW(800);
 
-   myStyle->SetPadBottomMargin(0.1);
-   myStyle->SetPadTopMargin(0.3);
-   myStyle->SetPadLeftMargin(0.1);
-   myStyle->SetPadRightMargin(0.1);
+   myStyle->SetPadBottomMargin(0.3);
+   myStyle->SetPadTopMargin(0.2);
+   myStyle->SetPadLeftMargin(0.2);
+   myStyle->SetPadRightMargin(0.2);
    myStyle->SetPadTickX(1);
    myStyle->SetPadTickY(1);
    myStyle->SetFrameBorderMode(0);
@@ -57,14 +57,15 @@
    myStyle->SetOptTitle(0);
 
    // Din letter
-   myStyle->SetPaperSize(21, 28);
+//   myStyle->SetPaperSize(21, 28);
 
    myStyle->SetStatBorderSize(0);
-   myStyle->SetStatX(0.85);
-   myStyle->SetStatY(0.85);
+   myStyle->SetStatColor(1184);
+   myStyle->SetStatX(0.75);
+   myStyle->SetStatY(0.77);
    myStyle->SetStatFont(42);
-   myStyle->SetOptStat(111110);// Show overflow and underflow as well
-   myStyle->SetOptFit(1111);
+   myStyle->SetOptStat("e");// Show overflow and underflow as well
+   myStyle->SetOptFit(111);
    myStyle->SetPalette(1);
 
    // apply the new style
