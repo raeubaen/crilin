@@ -6,12 +6,12 @@ charge_1_8_9; mean charge central cry back layer;0.5*(charge[1][8]+charge[1][9])
 charge_lay_0; sum crystals front layer;sumcharge[0];0;charge[0][8]>0 && charge[0][9]>0;kBlack;200;0;200;0;0;0;Sum Charge [pC];pC
 charge_lay_1; sum crystals back layer;sumcharge[1];0;charge[1][8]>0 && charge[1][9]>0;kBlack;200;10;200;0;0;0;Sum Charge [pC];pC
 charge_crilin; Crilin charge;sumcharge[1]+sumcharge[0];0;charge[0][8]>0 && charge[0][9]>0 &&charge[1][8]>0 && charge[1][9]>0 ;kBlack;200;10;400;0;0;0;Sum Charge [pC];pC
-charge_cindy_19; Cindy charge 19;charge[0][19];0;charge[0][8]>0 && charge[0][9]>0;kBlack;150;0;300;0;0;0;Charge [pC];pC
+charge_cindy_19; Cindy charge 19;charge[0][19];0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;150;0;300;0;0;0;Charge [pC];pC
 charge_cindy_20; Cindy charge 20;charge[0][20];0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;150;0;300;0;0;0;Charge [pC];pC
-timing_0_8_9;dt central crystal;time_pseudotime[0][8]-time_pseudotime[0][9];0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;200;-1;1;0;0;0;#DeltaT [ns];ns
-timing_1_8_9;dt central crystal;time_pseudotime[1][8]-time_pseudotime[1][9];0;charge[1][8]>0 && charge[1][9]>0;kBlack;200;-1;1;0;0;0;#DeltaT [ns];ns
-meantimes_0_8_9;mean time central crystal - cindy mean time;0.5*(time_pseudotime_corr[0][8]+time_pseudotime_corr[0][9])- 0.5*(time_pseudotime_corr[0][19]+time_pseudotime_corr[0][20]);0;charge[0][8]>0 && charge[0][9]>0;kBlack;400;-17;-13;0;0;0;#LT T_{centr. cry} #RT - #LT T_{ref} #RT [ns];ns
-meantimes_1_8_9;mean time central crystal - cindy mean time;0.5*(time_pseudotime_corr[1][8]+time_pseudotime_corr[1][9])- 0.5*(time_pseudotime_corr[0][19]+time_pseudotime_corr[0][20]);0;charge[1][8]>0 && charge[1][9]>0;kBlack;400;-17;-13;0;0;0;#LT T_{centr. cry} #RT - #LT T_{ref} #RT [ns];ns
+timing_0_8_9;dt central crystal;time_pseudotime[0][8]-time_pseudotime[0][9];0;charge[0][8]>0 && charge[0][9]>0 && time_pseudotime[0][8]-time_pseudotime[0][9] !=0;kBlack;200;-1;1;0;0;0;#DeltaT [ns];ns
+timing_1_8_9;dt central crystal;time_pseudotime[1][8]-time_pseudotime[1][9];0;charge[1][8]>0 && charge[1][9]>0 && time_pseudotime[1][8]-time_pseudotime[1][9] !=0;kBlack;200;-1;1;0;0;0;#DeltaT [ns];ns
+meantimes_0_8_9;mean time central crystal - cindy mean time;0.5*(time_pseudotime_corr[0][8]+time_pseudotime_corr[0][9])- 0.5*(time_pseudotime_corr[0][19]+time_pseudotime_corr[0][20]);0;charge[0][8]>0 && charge[0][9]>0;kBlack;400;-17;-13;0;0;0;#LT T_{centr. cry} #GT   -   #LT T_{ref} #GT [ns];ns
+meantimes_1_8_9;mean time central crystal - cindy mean time;0.5*(time_pseudotime_corr[1][8]+time_pseudotime_corr[1][9])- 0.5*(time_pseudotime_corr[0][19]+time_pseudotime_corr[0][20]);0;charge[1][8]>0 && charge[1][9]>0;kBlack;400;-17;-13;0;0;0;#LT T_{centr. cry} #GT   -   #LT T_{ref} #GT [ns];ns
 timing_vs_charge_0_8_9;dt central crystal vs mean charge;0.5*(charge[0][8]+charge[0][9]);time_pseudotime[0][8]-time_pseudotime[0][9];charge[0][8]>0 && charge[0][9]>0;0;60;5;65;200;-1;1;Mean Charge [pC];#DeltaT [ns]
 timing_vs_charge_1_8_9;dt central crystal vs mean charge;0.5*(charge[1][8]+charge[1][9]);time_pseudotime[1][8]-time_pseudotime[1][9];charge[1][8]>0 && charge[1][9]>0;0;60;5;65;200;-1;1;Mean Charge [pC];#DeltaT [ns]
 centroid_x;centroid x;centroid_x[0]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid X [cm];cm
