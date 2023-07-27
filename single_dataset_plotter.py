@@ -33,7 +33,7 @@ def plot(row, chain, outputfolder):
   f.Close()
 
 def add(chain, row):
-  lst = os.popen(f"ls -1 {row.filename.strip()}").read().split("\n")
+  lst = os.popen(f"/bin/bash -c 'ls -1 {row.filename.strip()}'").read().split("\n")
   for file in lst:
     chain.Add(f"{file}/{row.treename.strip()}")
 
