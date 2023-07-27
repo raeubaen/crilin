@@ -63,7 +63,8 @@ parser.add_argument('--cindylowcut19', type=float, help='Cindy low cut on charge
 parser.add_argument('--cindyhighcut19', type=float, help='Cindy high cut on charge19', default=90)
 parser.add_argument('--cindylowcut20', type=float, help='Cindy low cut on charge20', default=30)
 parser.add_argument('--cindyhighcut20', type=float, help='Cindy high cut on charge20', default=70)
-parser.add_argument('--charge_thr_for_crilin', type=float, help='Charge thr on crilin channels', default=6)
+parser.add_argument('--charge_thr_for_series', type=float, help='Charge thr on crilin series channels', default=2)
+parser.add_argument('--charge_thr_for_parallel', type=float, help='Charge thr on crilin parallel channels', default=5)
 parser.add_argument('--crilin_rise_window_end', type=float, help='End of window where signal rise is accepted', default=60)
 parser.add_argument('--crilin_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=20)
 parser.add_argument('--cindy_rise_window_end', type=float, help='End of window where signal rise is accepted', default=75)
@@ -190,6 +191,7 @@ for ev in range(maxevents):
             rise_window_start = crilin_rise_window_start + timeoffset
             rise_window_end = crilin_rise_window_end + timeoffset
             thr, cf = zerocr_thr, zerocr_cf
+            charge_thr_for_crilin = charge_thr_for_series
           else:
             B_pb, A_pb = butter(2, [parallellpfreq/(samplingrate/2.)])
             signalstart = parallelsignalstart + timeoffset
@@ -199,6 +201,7 @@ for ev in range(maxevents):
             rise_window_end = crilin_rise_window_end + timeoffset
             rise_ind = np.logical_and(t>rise_window_start, t<rise_window_end)
             thr, cf = zerocr_thr, zerocr_cf
+            charge_thr_for_crilin = charge_thr_for_parallel
 
 
       virgin_amp = amp.copy()
@@ -235,7 +238,7 @@ for ev in range(maxevents):
       tree_vars.charge[board][ch] = temp_charge
 
       tree_vars.timeAve[board][ch] = (signal_amp*signal_t).sum() / signal_amp.sum()
-  
+
       if tree_vars.savewave:
         tree_vars.wave[board, ch, :] = amp
         tree_vars.tWave[:] = t
