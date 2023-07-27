@@ -65,6 +65,8 @@ parser.add_argument('--cindylowcut20', type=float, help='Cindy low cut on charge
 parser.add_argument('--cindyhighcut20', type=float, help='Cindy high cut on charge20', default=70)
 parser.add_argument('--charge_thr_for_series', type=float, help='Charge thr on crilin series channels', default=2)
 parser.add_argument('--charge_thr_for_parallel', type=float, help='Charge thr on crilin parallel channels', default=5)
+parser.add_argument('--charge_thr_for_trigger', type=float, help='Charge thr on crilin series channels', default=0)
+parser.add_argument('--charge_thr_for_cindy', type=float, help='Charge thr on crilin parallel channels', default=10)
 parser.add_argument('--crilin_rise_window_end', type=float, help='End of window where signal rise is accepted', default=60)
 parser.add_argument('--crilin_rise_window_start', type=float, help='Start of window where signal rise is accepted', default=20)
 parser.add_argument('--cindy_rise_window_end', type=float, help='End of window where signal rise is accepted', default=75)
@@ -78,11 +80,13 @@ parser.add_argument('--parallellpfreq', type=float, help='Parallel Low pass filt
 parser.add_argument('--cindylpfreq', type=float, help='Cindy Low pass filter cut frequency (GHz)', default=0.5)
 parser.add_argument('--triggerlpfreq', type=float, help='Trigger Low pass filter cut frequency (GHz)', default=0.5)
 parser.add_argument('--seriespseudotime_cf', type=float, help='Pseudotime CF', default=0.11)
-parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF', default=0.14)
+parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF', default=0.11)
 parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', default=0.05)
 parser.add_argument('--zerocr', type=int, help='Evaluate Zerocrossing time', default=1)
 parser.add_argument('--centroid_square_cut_thr', type=float, help='Threshold in mm on abs centroid x and y', default=2.5)
 parser.add_argument('--rmscut', type=float, help='cut on pre signal rms (mV)', default=1.5)
+parser.add_argument('--saveallwave', type=int, help='save alla waves', default=0)
+
 
 args = parser.parse_args()
 v = vars(args)
@@ -156,7 +160,7 @@ for ev in range(maxevents):
     print("Event: %i"%ev)
     if np.random.uniform() < 0.1:
       tree_vars.savewave[0] = 1
-      
+
   tree_vars.evnum[0] = ev+offset
 
   for board in range(boardsnum):
@@ -172,6 +176,7 @@ for ev in range(maxevents):
         rise_window_end = trigger_rise_window_end + timeoffset
         thr = trigger_thr_start
         amp = np.asarray(intree.WavesTrig)[nsamples*4*board + (ch-chsnum)*nsamples : nsamples*4*board + (ch-chsnum+1)*nsamples]
+        charge_thr = charge_thr_for_trigger
       else:
         amp = np.asarray(intree.Waves)[nsamples*chsnum*board + ch*nsamples:nsamples*chsnum*board + (ch+1)*nsamples]
         if ch in [19, 20]:
@@ -182,6 +187,7 @@ for ev in range(maxevents):
           rise_window_start = cindy_rise_window_start + timeoffset
           rise_window_end = cindy_rise_window_end + timeoffset
           thr, cf = cindyzerocr_thr, cindyzerocr_cf
+          charge_thr = charge_thr_for_cindy
         else:
           if board==0:
             B_pb, A_pb = butter(2, [serieslpfreq/(samplingrate/2.)])
@@ -191,7 +197,7 @@ for ev in range(maxevents):
             rise_window_start = crilin_rise_window_start + timeoffset
             rise_window_end = crilin_rise_window_end + timeoffset
             thr, cf = zerocr_thr, zerocr_cf
-            charge_thr_for_crilin = charge_thr_for_series
+            charge_thr = charge_thr_for_series
           else:
             B_pb, A_pb = butter(2, [parallellpfreq/(samplingrate/2.)])
             signalstart = parallelsignalstart + timeoffset
@@ -201,7 +207,7 @@ for ev in range(maxevents):
             rise_window_end = crilin_rise_window_end + timeoffset
             rise_ind = np.logical_and(t>rise_window_start, t<rise_window_end)
             thr, cf = zerocr_thr, zerocr_cf
-            charge_thr_for_crilin = charge_thr_for_parallel
+            charge_thr = charge_thr_for_parallel
 
 
       virgin_amp = amp.copy()
@@ -226,7 +232,7 @@ for ev in range(maxevents):
 
       temp_charge = signal_amp.sum()  / (50 * samplingrate) # V * ns * 1e3 / ohm = pC
 
-      if temp_charge < charge_thr_for_crilin or temp_pre_signal_rms > rmscut:
+      if temp_charge < charge_thr or temp_pre_signal_rms > rmscut:
         continue
       else:
         if ch <18:
@@ -239,7 +245,7 @@ for ev in range(maxevents):
 
       tree_vars.timeAve[board][ch] = (signal_amp*signal_t).sum() / signal_amp.sum()
 
-      if tree_vars.savewave:
+      if saveallwave or tree_vars.savewave[0]:
         tree_vars.wave[board, ch, :] = amp
         tree_vars.tWave[:] = t
         if lpfilter: tree_vars.unfiltered_wave[board, ch, :] = virgin_amp
@@ -371,7 +377,6 @@ for ev in range(maxevents):
     tree_vars.single_e_flag[0] = int(cindycut19 and cindycut20)
 
     crilin_charges = tree_vars.charge[board][0:18]
-    crilin_charges = crilin_charges[crilin_charges > charge_thr_for_crilin]
     tree_vars.sumcharge[board] = crilin_charges.sum()
 
   if not (applysinglepcut and tree_vars.single_e_flag[0]==0):
@@ -381,8 +386,8 @@ for ev in range(maxevents):
       temp_centroid_x, temp_centroid_y = 0, 0
       for board in range(boardsnum):
         temp_charge = tree_vars.charge[board][0:18]
-        temp_centroid_x += (x*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
-        temp_centroid_y += (y*temp_charge)[temp_charge > charge_thr_for_crilin].sum()
+        temp_centroid_x += (x*temp_charge).sum()
+        temp_centroid_y += (y*temp_charge).sum()
       tree_vars.centroid_x[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())*10
       tree_vars.centroid_y[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())*10
       tree_vars.centroid_cut_flag[0] = int( abs(tree_vars.centroid_x[0])<centroid_square_cut_thr and abs(tree_vars.centroid_y[0])<centroid_square_cut_thr )
