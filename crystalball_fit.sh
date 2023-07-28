@@ -5,9 +5,10 @@ root << EOF
   auto *f = new TF1("f", "0.5*ROOT::Math::crystalball_pdf(x-[#mu], [#alpha], [n], [#sigma])*[Norm] + 0.5*ROOT::Math::crystalball_pdf([#mu]-x, [#alpha], [n], [#sigma])*[Norm]", -0.7, 0.7);
   f->SetParameters(1, 0, 0.1, 100, 10);
   h->Fit(f, "R");
-  h->Draw()
+  TCanvas c;
+  h->Draw();
   h->SaveAs("$3/$1_fit.root");
-  h->SaveAs("$3/$1_fit.png");
-  h->SaveAs("$3/$1_fit.pdf");
+  c.SaveAs("$3/$1_fit.png");
+  c.SaveAs("$3/$1_fit.pdf");
   inf->Close();
 EOF
