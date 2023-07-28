@@ -154,7 +154,8 @@ maxevents = min(maxevents, intree.GetEntries())
 tree_vars.front_board[0] = frontboard
 
 for ev in range(maxevents):
-  intree.GetEntry(ev+offset)
+  if intree.GetEntry(ev+offset) <= 0:
+    continue
 
   to_discard = 1
   zero_all_vars(tree_vars)
