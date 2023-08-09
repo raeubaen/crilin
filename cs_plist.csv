@@ -1,0 +1,2 @@
+name;title;x;y;cuts;color;binsnx;binsminx;binsmaxx;binsny;binsminy;binsmaxy;xlabel;ylabel
+ring1vsall_front_he;Q_{R_{1},L_{0}} vs. Q_{L_{0}} ;sumcharge[0]-charge[0][8]-charge[0][9];sumcharge[0];charge[0][8]>0 && charge[0][9]>0 && sumcharge[0]+sumcharge[1] > 350;0;100;5;1005;100;5;1005;Charge_{R_{1}, L_{0}} [pC];Charge_{0, 9} [pC]
