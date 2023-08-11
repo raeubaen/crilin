@@ -24,7 +24,7 @@ vars().update(v)
 def process(row, outputfolder, inputfolder):
   os.system(f"mkdir {outputfolder}/{row.label}")
   os.system(f"cp index.php {outputfolder}/{row.label}")
-  for plot in ["timing_0_8_9", "timing_1_8_9", "ztiming_0_8_9", "ztiming_1_8_9"]:
+  for plot in ["ztiming_0_8_9", "ztiming_1_8_9"]: #, "timing_0_8_9", "timing_1_8_9"]:
     os.system(f"/bin/bash -c 'source crystalball_fit.sh {plot} {inputfolder}/{row.label} {outputfolder}/{row.label}'")
 
 dataconf_df = pd.read_csv(dataconffile, sep=";")
