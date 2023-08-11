@@ -24,12 +24,12 @@ void plot_monitor_h2(TString file, TString outfile){
       p->cd((3*_x+_y + 1));
       int b=j%2;
       if (j/2){
-        if(b==0) intree->Draw(Form("(front_charge[%i]+front_charge[%i])/2>>h_%i(200, 0, 100)", i*2, i*2+1, 9*j+i), Form("front_charge[%i]!=0 && front_charge[%i]!=0", i*2, i*2+1));
-        else     intree->Draw(Form("(back_charge[%i]+back_charge[%i])/2>>h_%i(200, 0, 100)",   i*2, i*2+1, 9*j+i), Form("back_charge[%i]!=0 && back_charge[%i]!=0", i*2, i*2+1));
+        if(b==0) intree->Draw(Form("(front_charge[%i]+front_charge[%i])/2>>h_%i(200, 0, 100)", i*2, i*2+1, 9*j+i));
+        else     intree->Draw(Form("(back_charge[%i]+back_charge[%i])/2>>h_%i(200, 0, 100)",   i*2, i*2+1, 9*j+i));
       }
       else {
-        if(b==0) intree->Draw(Form("(front_pseudo_t[%i]-front_pseudo_t[%i])/2>>h_%i(200, -1, 1)", i*2, i*2+1, 9*j+i));
-        else     intree->Draw(Form("(back_pseudo_t[%i]-back_pseudo_t[%i])/2>>h_%i(200, -1, 1)", i*2, i*2+1, 9*j+i));
+        if(b==0) intree->Draw(Form("(front_pseudo_t[%i]-front_pseudo_t[%i])/2>>h_%i(200, -1, 1)", i*2, i*2+1, 9*j+i), Form("front_pseudo_t[%i]!=0 && front_pseudo_t[%i]!=0", i*2, i*2+1));
+        else     intree->Draw(Form("(back_pseudo_t[%i]-back_pseudo_t[%i])/2>>h_%i(200, -1, 1)", i*2, i*2+1, 9*j+i), Form("back_pseudo_t[%i]!=0 && back_pseudo_t[%i]!=0", i*2, i*2+1));
       }
     }
   }
