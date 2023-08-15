@@ -11,6 +11,7 @@ parser.add_argument('frontboard', type=int, help='Board. in front', default=0)
 parser.add_argument('--startn', type=int, help='skip n fragments', default=0)
 parser.add_argument('--cat', type=int, help='concatenate last .cat file when startn!=0', default=1)
 parser.add_argument('--sleep', type=int, help='sleep between fragments', default=1)
+parser.add_argument('--fragsize', type=int, help='events per fragment', default=100)
 
 args = parser.parse_args()
 v = vars(args)
@@ -25,7 +26,7 @@ os.system(f"mkdir {outfolder}")
 while True:
     print(f"reco-ing fragment {n}")
 
-    os.system(f"python3 recogpu.py {infilename} {outfolder}/out_{n}.root {label} {frontboard} {100*n} 100")
+    os.system(f"python3 recogpu.py {infilename} {outfolder}/out_{n}.root {label} {frontboard} {fragsize*n} fragsize")
 
     print(f"hadd-ing fragment {n}")
     if n==startn:
