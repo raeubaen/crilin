@@ -24,6 +24,16 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
   charge = signal.sum(axis=2) / (50 * sampling_rate)  * adc_to_mv_factor
   charge[charge<charge_thr] = 0
 
+  charge_sum = charge.sum(axis=1)
+
+  _x = cp.asarray([int(i/2)%3-1 for i in range(18)])
+  x = np.repeat(_x[:, :, np.newaxis], charge.shape[0], axis=0)
+  _y = np.asarray([int(int(i/2)/3)-1 for i in range(18)])
+  y = np.repeat(_y[:, :, np.newaxis], charge.shape[0], axis=0)
+
+  centroid_x = (x*charge).sum(axis=1)/charge_sum
+  centroid_y = (y*charge).sum(axis=1)/charge_sum
+
   rise = signal[:, :, :int((rise_end-signal_start)*sampling_rate)]
 
   del signal
@@ -41,6 +51,12 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
 
   pseudo_t = cp.argmax(rise_interp > cp.repeat((ampPeak*cf)[:, :, cp.newaxis], rise_interp.shape[2], axis=2), axis=2)/(sampling_rate*20)
   ampPeak *= adc_to_mv_factor
-  reco_dict = {"pre_signal_bline,": pre_signal_bline, "pre_signal_rms": pre_signal_rms, "charge": charge, "ampPeak": ampPeak, "time_peak": time_peak, "pseudo_t": pseudo_t}
+
+  reco_dict = {
+    "pre_signal_bline,": pre_signal_bline, "pre_signal_rms": pre_signal_rms,
+    "charge": charge, "ampPeak": ampPeak, "time_peak": time_peak,
+    "pseudo_t": pseudo_t, "charge_sum": charge_sum, "centroid_x": centroid_x, "centroid_y": centroid_y
+  }
+
   if save_waves:  reco_dict.update({"wave": waves})
   return reco_dict

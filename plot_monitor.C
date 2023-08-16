@@ -31,6 +31,6 @@ void plot_monitor(TString filesmall, TString filebig){
     }
     if(j/2==1) p->SetFillColor(kCyan);
   }
-  
+
   //c->RaiseWindow();
 }
