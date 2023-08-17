@@ -397,8 +397,9 @@ for ev in range(maxevents):
         if temp_charge.sum() == 0:
           tree_vars.centroid_x[board] = -99
           tree_vars.centroid_y[board] = -99
-        tree_vars.centroid_x[board] = (x*temp_charge).sum()/(temp_charge.sum())*10
-        tree_vars.centroid_y[board] = (y*temp_charge).sum()/(temp_charge.sum())*10
+        else:
+          tree_vars.centroid_x[board] = (x*temp_charge).sum()/(temp_charge.sum())*10
+          tree_vars.centroid_y[board] = (y*temp_charge).sum()/(temp_charge.sum())*10
 
       tree_vars.centroid_x_all_layers[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())*10
       tree_vars.centroid_y_all_layers[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())*10
