@@ -27,9 +27,9 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
   charge_sum = charge.sum(axis=1)
 
   _x = cp.asarray([int(i/2)%3-1 for i in range(18)])
-  x = np.repeat(_x[:, :, np.newaxis], charge.shape[0], axis=0)
-  _y = np.asarray([int(int(i/2)/3)-1 for i in range(18)])
-  y = np.repeat(_y[:, :, np.newaxis], charge.shape[0], axis=0)
+  x = cp.repeat(_x[cp.newaxis, :], charge.shape[0], axis=0)
+  _y = cp.asarray([int(int(i/2)/3)-1 for i in range(18)])
+  y = cp.repeat(_y[cp.newaxis, :], charge.shape[0], axis=0)
 
   centroid_x = (x*charge).sum(axis=1)/charge_sum
   centroid_y = (y*charge).sum(axis=1)/charge_sum
@@ -40,17 +40,23 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
   cp.get_default_memory_pool().free_all_blocks()
   cp.get_default_pinned_memory_pool().free_all_blocks()
 
-  rise_interp = ndimage.zoom(rise, [1, 1, 20])
+  if rise.shape[0]==0:
+    ampPeak = charge*0
+    time_peak = charge*0
+    pseudo_t = charge*0
 
-  del rise
-  cp.get_default_memory_pool().free_all_blocks()
-  cp.get_default_pinned_memory_pool().free_all_blocks()
+  else:
+    rise_interp = ndimage.zoom(rise, [1, 1, 20])
 
-  ampPeak = rise_interp.max(axis=2)
-  time_peak = rise_interp.argmax(axis=2)/(sampling_rate*20)
+    del rise
+    cp.get_default_memory_pool().free_all_blocks()
+    cp.get_default_pinned_memory_pool().free_all_blocks()
 
-  pseudo_t = cp.argmax(rise_interp > cp.repeat((ampPeak*cf)[:, :, cp.newaxis], rise_interp.shape[2], axis=2), axis=2)/(sampling_rate*20)
-  ampPeak *= adc_to_mv_factor
+    ampPeak = rise_interp.max(axis=2)
+    time_peak = rise_interp.argmax(axis=2)/(sampling_rate*20)
+
+    pseudo_t = cp.argmax(rise_interp > cp.repeat((ampPeak*cf)[:, :, cp.newaxis], rise_interp.shape[2], axis=2), axis=2)/(sampling_rate*20)
+    ampPeak *= adc_to_mv_factor
 
   reco_dict = {
     "pre_signal_bline,": pre_signal_bline, "pre_signal_rms": pre_signal_rms,

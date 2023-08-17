@@ -106,8 +106,9 @@ if save_waves:
   times = cp.repeat(times[cp.newaxis, :], nevents, axis=0)
   reco_dict.update({"tWave": times})
 
-evnum = cp.arange(offset, offset+nevents)
-reco_dict.update({"evnum": evnum})
+#evnum = cp.arange(offset, offset+nevents)
+
+#reco_dict.update({"evnum": evnum})
 
 outfile = uproot.recreate(outfilename)
 outfile["tree"] = reco_dict

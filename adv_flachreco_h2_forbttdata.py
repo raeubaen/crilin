@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser(description='Online monitor and reconstruction 
 
 parser.add_argument('infilename', type=str, help='Input file name .root')
 parser.add_argument('outfilename', type=str, help='outfile', default="")
+parser.add_argument('frontboard', type=int, help='frontboard', default=0)
 
 args = parser.parse_args()
 v = vars(args)
@@ -14,8 +15,8 @@ vars().update(v)
 
 intree = uproot.open(f"{infilename}:tree")
 
-front_charge = intree["front_charge"].array(library="np")
-back_charge = intree["back_charge"].array(library="np")
+front_charge = intree["charge"].array(library="np")[:, frontboard, :]
+back_charge = intree["charge"].array(library="np")[:, 1-frontboard, :]
 
 front_sum = front_charge.sum(axis=1)
 back_sum = back_charge.sum(axis=1)
@@ -31,12 +32,11 @@ front_centroid_y = (y*front_charge).sum(axis=1)/front_sum
 back_centroid_y = (y*back_charge).sum(axis=1)/back_sum
 
 outfile = uproot.recreate(outfilename)
-outfile["tree"] = reco_dict
 
 reco_dict = {
-  "pre_signal_bline,": pre_signal_bline, "pre_signal_rms": pre_signal_rms,
-  "charge": charge, "ampPeak": ampPeak, "time_peak": time_peak,
-  "pseudo_t": pseudo_t, "charge_sum": charge_sum, "centroid_x": centroid_x, "centroid_y": centroid_y
+  "charge_sum": charge_sum, "centroid_x": centroid_x, "centroid_y": centroid_y
 }
+
+outfile["tree"] = reco_dict
 
 outfile.close()

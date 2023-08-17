@@ -124,8 +124,10 @@ tree_vars.update({
   "time_pseudotime": tree_var(tree, "time_pseudotime", std_shape, np.float32, "F"),
   "time_pseudotime_corr": tree_var(tree, "time_pseudotime_corr", std_shape, np.float32, "F"),
   "time_trig": tree_var(tree, "time_trig", (boardsnum, 4), np.float32, "F"),
-  "centroid_x": tree_var(tree, "centroid_x", (1,), np.float32, "F"),
-  "centroid_y": tree_var(tree, "centroid_y", (1,), np.float32, "F"),
+  "centroid_x": tree_var(tree, "centroid_x", (2,), np.float32, "F"),
+  "centroid_y": tree_var(tree, "centroid_y", (2,), np.float32, "F"),
+  "centroid_x_all_layers": tree_var(tree, "centroid_x_all_layers", (1,), np.float32, "F"),
+  "centroid_y_all_layers": tree_var(tree, "centroid_y_all_layers", (1,), np.float32, "F"),
   "centroid_cut_flag": tree_var(tree, "centroid_cut_flag", (1,), np.int32, "I"),
   "front_board": tree_var(tree, "front_board", (1,), np.int32, "I"),
 })
@@ -392,8 +394,15 @@ for ev in range(maxevents):
         temp_charge = tree_vars.charge[board][0:18]
         temp_centroid_x += (x*temp_charge).sum()
         temp_centroid_y += (y*temp_charge).sum()
-      tree_vars.centroid_x[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())*10
-      tree_vars.centroid_y[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())*10
+        if temp_charge.sum() == 0:
+          tree_vars.centroid_x[board] = -99
+          tree_vars.centroid_y[board] = -99
+        tree_vars.centroid_x[board] = (x*temp_charge).sum()/(temp_charge.sum())*10
+        tree_vars.centroid_y[board] = (y*temp_charge).sum()/(temp_charge.sum())*10
+
+      tree_vars.centroid_x_all_layers[0] = temp_centroid_x/(tree_vars.sumcharge[:].sum())*10
+      tree_vars.centroid_y_all_layers[0] = temp_centroid_y/(tree_vars.sumcharge[:].sum())*10
+      #centroidall = (centroid0*sumcharge0 + centroid1*sumcharge1)/(sumcharge0 + sumcharge1)
       tree_vars.centroid_cut_flag[0] = int( abs(tree_vars.centroid_x[0])<centroid_square_cut_thr and abs(tree_vars.centroid_y[0])<centroid_square_cut_thr )
       tree.Fill()
 
