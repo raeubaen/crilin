@@ -43,9 +43,12 @@ parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', de
 parser.add_argument('--centroid_square_cut_thr', type=float, help='Threshold in mm on abs centroid x and y', default=2.5)
 parser.add_argument('--rmscut', type=float, help='cut on pre signal rms (mV)', default=1.5)
 parser.add_argument('--save_waves', type=int, help='save all waves', default=0)
-parser.add_argument('--ch_cindysx', type=int, help='sx cindy channel n', default=19)
-parser.add_argument('--ch_cindydx', type=int, help='dx cindy channel n', default=20)
-parser.add_argument('--adc_to_mv_factor', type=float, help='adc->mV factor', default=0.244) #1V = 4096 counts
+parser.add_argument('--ch_cindysx', type=int, help='sx cindy channel n', default=2)
+parser.add_argument('--ch_cindydx', type=int, help='dx cindy channel n', default=3)
+parser.add_argument('--ch_cindycopy', type=int, help='copy cindy channel n', default=50)
+parser.add_argument('--seriesadc_to_mv_factor', type=float, help='adc->mV factor', default=0.488) #2V = 4096 counts
+parser.add_argument('--paralleladc_to_mv_factor', type=float, help='adc->mV factor', default=0.244) #1V = 4096 counts
+parser.add_argument('--cindyadc_to_mv_factor', type=float, help='adc->mV factor', default=0.488) #2V = 4096 counts
 
 args = parser.parse_args()
 v = vars(args)
@@ -58,13 +61,14 @@ with open("%s"%outfilename.replace('.root', '.json'), 'w') as fp:
 intree = uproot.open(f"{infilename}:t")
 nevents = min(intree.num_entries, maxevents)
 
-'''
-cindy_waves = cp.zeros((nevents, 2, nsamples))
+cindy_waves = cp.zeros((nevents, 3, nsamples))
 cindy_waves[:, 0, :] = cp.asarray(intree[f"wave{ch_cindysx}"].array(library="np")[offset:offset+nevents, :])
 cindy_waves[:, 1, :] = cp.asarray(intree[f"wave{ch_cindydx}"].array(library="np")[offset:offset+nevents, :])
+cindy_waves[:, 2, :] = cp.asarray(intree[f"wave{ch_cindycopy}"].array(library="np")[offset:offset+nevents, :])/2 #sta sull'altro digitizer
 
-cindy_reco = gpu_routines.get_reco_products(cindy_waves, cindysignalstart, cindysignalend, cindyriseend, charge_thr_for_cindy, nsamples, cindypseudotime_cf, adc_to_mv_factor, save_waves)
+cindy_reco = gpu_routines.get_reco_products(cindy_waves, cindysignalstart, cindysignalend, cindyriseend, charge_thr_for_cindy, nsamples, cindypseudotime_cf, cindyadc_to_mv_factor, save_waves)
 
+'''
 trigger_waves = cp.zeros((nevents, 4, nsamples)) #veramente 4??
 trigger_reco = gpu_routines.get_trigger_reco(trigger_waves, triggersignalstart, triggersignalend, trigger_thr_start, trigger_thr_end, adc_to_mv_factor, save_waves) #zero crossing con pol2 - chiedere a elisa
 '''
@@ -78,12 +82,12 @@ for index, row in map.iterrows():
   else:
     parallel_waves[:, row.ch, :] = cp.asarray(intree[f"wave{row.daqch}"].array(library="np")[offset:offset+nevents, :])
 
-series_board_reco = gpu_routines.get_reco_products(series_waves, seriessignalstart, seriessignalend, seriesriseend, charge_thr_for_series, samplingrate, nsamples, seriespseudotime_cf, adc_to_mv_factor, save_waves)
+series_board_reco = gpu_routines.get_reco_products(series_waves, seriessignalstart, seriessignalend, seriesriseend, charge_thr_for_series, samplingrate, nsamples, seriespseudotime_cf, seriesadc_to_mv_factor, save_waves)
 del series_waves
 cp.get_default_memory_pool().free_all_blocks()
 cp.get_default_pinned_memory_pool().free_all_blocks()
 
-parallel_board_reco = gpu_routines.get_reco_products(parallel_waves, parallelsignalstart, parallelsignalend, parallelriseend, charge_thr_for_parallel, samplingrate, nsamples, parallelpseudotime_cf, adc_to_mv_factor, save_waves)
+parallel_board_reco = gpu_routines.get_reco_products(parallel_waves, parallelsignalstart, parallelsignalend, parallelriseend, charge_thr_for_parallel, samplingrate, nsamples, parallelpseudotime_cf, paralleladc_to_mv_factor, save_waves)
 del parallel_waves
 cp.get_default_memory_pool().free_all_blocks()
 cp.get_default_pinned_memory_pool().free_all_blocks()
