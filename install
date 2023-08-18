@@ -1,0 +1,10 @@
+first time:
+- go in the folder before the repo
+- virtualenv -p python3 env
+- source env/bin/activate
+- pip3 install pandas
+
+every time:
+- go in the folder before the repo
+- source env/bin/activate
+- source /cvmfs/sft.cern.ch/lcg/app/releases/ROOT/6.24.08/x86_64-centos7-gcc48-opt/bin/thisroot.sh
