@@ -1,0 +1,10 @@
+name;title;x;y;cuts;color;binsnx;binsminx;binsmaxx;binsny;binsminy;binsmaxy;xlabel;ylabel
+centroid_x;centroid x all layers;centroid_x_all_layers[0]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid X [cm];cm
+centroid_y;centroid y all layers;centroid_y_all_layers[0]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid Y [cm];cm
+centroid_xvsy;x vs y all layers;centroid_x_all_layers[0]/10;centroid_y_all_layers[0]/10;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;0;20;-1;1;20;-1;1;Centroid X [cm];Centroid Y [cm]
+centroid_x_front;centroid x front;centroid_x[front_board[0]]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid X [cm];cm
+centroid_y_front;centroid y front;centroid_y[front_board[0]]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid Y [cm];cm
+centroid_xvsy_front;x vs y front;centroid_x[front_board[0]]/10;centroid_y[front_board[0]]/10;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;0;20;-1;1;20;-1;1;Centroid X [cm];Centroid Y [cm]
+centroid_x_back;centroid x back;centroid_x[1-front_board[0]]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid X [cm];cm
+centroid_y_back;centroid y back;centroid_y[1-front_board[0]]/10;0;charge[front_board[0]][8]>0 && charge[front_board[0]][9]>0;kBlack;20;-1;1;0;0;0;Centroid Y [cm];cm
+centroid_xvsy_back;x vs y back;centroid_x[1-front_board[0]]/10;centroid_y[1-front_board[0]]/10;charge[front_board[0][8]>0 && charge[front_board[0]][9]>0;0;20;-1;1;20;-1;1;Centroid X [cm];Centroid Y [cm]
