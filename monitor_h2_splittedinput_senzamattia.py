@@ -12,7 +12,7 @@ parser.add_argument('frontboard', type=int, help='Board. in front', default=0)
 parser.add_argument('--startn', type=int, help='skip n fragments', default=0)
 parser.add_argument('--cat', type=int, help='concatenate last .cat file when startn!=0', default=0)
 parser.add_argument('--sleep', type=int, help='sleep between fragments', default=0)
-parser.add_argument('--fragsize', type=int, help='events per fragment', default=2000) #fino a 10k ci entra
+parser.add_argument('--fragsize', type=int, help='events per fragment', default=1000) #fino a 10k ci entra
 
 args = parser.parse_args()
 v = vars(args)
@@ -27,18 +27,16 @@ os.system(f"mkdir {outfolder}")
 while True:
     print(f"reco-ing fragment {n+1}")
     try:
-      du_out = os.popen(f"du -B k {infilename}_{n+1:06d}.root")
+      du_out = os.popen(f"du -B k {infilename}_{n+1:05d}.root")
       du_size_kb = float(du_out.read().split("K")[0])
       if du_size_kb < 8:
         raise ValueError("du wrong")
-      os.system(f"python3 recogpu.py {infilename}_{n+1:06d}.root {outfolder}/out_{n+1}.root {label} {frontboard} 0 {fragsize}")
+      ret = os.system(f"python3 recogpu_senzamattia.py {infilename}_{n+1:05d}.root {outfolder}/out_{n+1}.root {label} {frontboard} 0 {fragsize}")
+      if ret!=0: raise ValueError("no reco")
     except:
-      print(f"fragment {n+1} under 8 kB - skipping")
-      os.system(f"cp gpu_empty_reco_tree.root {outfolder}/out_{n+1}.root")
-      n+=1
+      print(f"fragment {n+1} under 8 kB - retrying")
+      #os.system(f"cp gpu_empty_reco_tree.root {outfolder}/out_{n+1}.root")
       continue
-
-    os.system(f"python3 recogpu.py {infilename}_{n+1:06d}.root {outfolder}/out_{n+1}.root {label} {frontboard} 0 {fragsize}")
 
     print(f"hadd-ing fragment {n+1}")
     if n==startn:

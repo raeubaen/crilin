@@ -1,9 +1,10 @@
 import cupy as cp
 from cupyx.scipy import ndimage
 
-def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sampling_rate, nsamples, cf, adc_to_mv_factor, save_waves):
+def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sampling_rate, nsamples, cf, save_waves):
+
   #waves has shape (nevents, chs, nsamples) - serie e parallelo separati
-  pre_signal = waves[:, :, :int(signal_start*sampling_rate)]
+  pre_signal = waves[:, :, :int(signal_start*sampling_rate)] #da qua : a qua
   pre_signal_bline = pre_signal.mean(axis=2)
   pre_signal_rms = pre_signal.std(axis=2)
 
@@ -21,24 +22,30 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
   cp.get_default_memory_pool().free_all_blocks()
   cp.get_default_pinned_memory_pool().free_all_blocks()
 
-  charge = signal.sum(axis=2) / (50 * sampling_rate)  * adc_to_mv_factor
+  charge = signal.sum(axis=2) / (50 * sampling_rate) #pC se parti da mV
   charge[charge<charge_thr] = 0
 
   charge_sum = charge.sum(axis=1)
 
-  _x = cp.asarray([int(i/2)%3-1 for i in range(18)])
-  x = cp.repeat(_x[cp.newaxis, :], charge.shape[0], axis=0)
-  _y = cp.asarray([int(int(i/2)/3)-1 for i in range(18)])
-  y = cp.repeat(_y[cp.newaxis, :], charge.shape[0], axis=0)
+  if charge.shape[1] == 18:
+    _x = cp.asarray([int(i/2)%3-1 for i in range(18)])
+    x = cp.repeat(_x[cp.newaxis, :], charge.shape[0], axis=0)
+    _y = cp.asarray([int(int(i/2)/3)-1 for i in range(18)])
+    y = cp.repeat(_y[cp.newaxis, :], charge.shape[0], axis=0)
 
-  centroid_x = (x*charge).sum(axis=1)/charge_sum
-  centroid_y = (y*charge).sum(axis=1)/charge_sum
+    centroid_x = (x*charge).sum(axis=1)/charge_sum
+    centroid_y = (y*charge).sum(axis=1)/charge_sum
+
+  else:
+    centroid_x = charge*0
+    centroid_y = charge*0
 
   rise = signal[:, :, :int((rise_end-signal_start)*sampling_rate)]
 
   del signal
   cp.get_default_memory_pool().free_all_blocks()
   cp.get_default_pinned_memory_pool().free_all_blocks()
+
 
   if rise.shape[0]==0:
     ampPeak = charge*0
@@ -56,7 +63,6 @@ def get_reco_products(waves, signal_start, signal_end, rise_end, charge_thr, sam
     time_peak = rise_interp.argmax(axis=2)/(sampling_rate*20)
 
     pseudo_t = cp.argmax(rise_interp > cp.repeat((ampPeak*cf)[:, :, cp.newaxis], rise_interp.shape[2], axis=2), axis=2)/(sampling_rate*20)
-    ampPeak *= adc_to_mv_factor
 
   reco_dict = {
     "pre_signal_bline,": pre_signal_bline, "pre_signal_rms": pre_signal_rms,

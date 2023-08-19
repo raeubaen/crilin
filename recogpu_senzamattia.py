@@ -29,19 +29,12 @@ parser.add_argument('--triggersignalstart', type=int, help='Trigger Si gnal star
 parser.add_argument('--triggersignalend', type=int, help='Trigger Signal end (ns)', default=175)
 parser.add_argument('--trigger_thr_start', type=float, help='Fixed threshold for trigger timing (start) mV', default=50)
 parser.add_argument('--trigger_thr_end', type=float, help='Fixed threshold for trigger timing (end) mV', default=250)
-parser.add_argument('--applysinglepcut', type=int, help='reco only events passing single p. cut (cindy raw charge mean btw 10 and 90 (modifiable)', default=0)
-parser.add_argument('--cindylowcutsx', type=float, help='Cindy low cut on chargesx', default=50)
-parser.add_argument('--cindyhighcutsx', type=float, help='Cindy high cut on chargesx', default=90)
-parser.add_argument('--cindylowcutdx', type=float, help='Cindy low cut on chargedx', default=30)
-parser.add_argument('--cindyhighcutdx', type=float, help='Cindy high cut on chargedx', default=70)
 parser.add_argument('--charge_thr_for_series', type=float, help='Charge thr on crilin series channels', default=0.1) #2
 parser.add_argument('--charge_thr_for_parallel', type=float, help='Charge thr on crilin parallel channels', default=0.1) #5
-parser.add_argument('--charge_thr_for_cindy', type=float, help='Charge thr on cindy channels', default=10)
+parser.add_argument('--charge_thr_for_cindy', type=float, help='Charge thr on cindy channels', default=0.1)
 parser.add_argument('--seriespseudotime_cf', type=float, help='Pseudotime CF', default=0.11)
 parser.add_argument('--parallelpseudotime_cf', type=float, help='Pseudotime CF', default=0.11)
 parser.add_argument('--cindypseudotime_cf', type=float, help='Pseudotime CF', default=0.05)
-parser.add_argument('--centroid_square_cut_thr', type=float, help='Threshold in mm on abs centroid x and y', default=2.5)
-parser.add_argument('--rmscut', type=float, help='cut on pre signal rms (mV)', default=1.5)
 parser.add_argument('--save_waves', type=int, help='save all waves', default=0)
 parser.add_argument('--ch_cindysx', type=int, help='sx cindy channel n', default=2)
 parser.add_argument('--ch_cindydx', type=int, help='dx cindy channel n', default=3)
@@ -55,13 +48,17 @@ vars().update(v)
 with open("%s"%outfilename.replace('.root', '.json'), 'w') as fp:
     json.dump(vars(args), fp)
 
-intree = uproot.open(f"{infilename}:t")
-nevents = min(intree.num_entries, maxevents)
+digi0 = uproot.open(f"{infilename}:h3")
+digi1 = uproot.open(f"{infilename}:h4")
 
-cindy_waves = cp.zeros((nevents, 3, nsamples))
-cindy_waves[:, 0, :] = cp.asarray(intree[f"wave{ch_cindysx}"].array(library="np")[offset:offset+nevents, :])*2000/4096 #in mV
-cindy_waves[:, 1, :] = cp.asarray(intree[f"wave{ch_cindydx}"].array(library="np")[offset:offset+nevents, :])*2000/4096
-cindy_waves[:, 2, :] = cp.asarray(intree[f"wave{ch_cindycopy}"].array(library="np")[offset:offset+nevents, :])*1000/4096 #sta sull'altro digitizer
+nevents = min(digi0.num_entries, maxevents)
+
+digi0_waves = cp.asarray(digi0["Idigi_742a"].array(library="np")[offset:offset+nevents, :]).astype(cp.float64)*2000/4096
+digi1_waves = cp.asarray(digi1["Idigi_742b"].array(library="np")[offset:offset+nevents, :]).astype(cp.float64)*1000/4096
+
+cindy_waves = cp.zeros((nevents, 2, nsamples))
+cindy_waves[:, 0, :] = digi0_waves[:, (nsamples+7)*ch_cindysx + 5 : (nsamples+7)*(ch_cindysx+1) - 2]*(-1)
+cindy_waves[:, 1, :] = digi0_waves[:, (nsamples+7)*ch_cindydx + 5 :(nsamples+7)*(ch_cindydx+1) -2 ]*(-1)
 
 cindy_reco = gpu_routines.get_reco_products(cindy_waves, cindysignalstart, cindysignalend, cindyriseend, charge_thr_for_cindy, samplingrate, nsamples, cindypseudotime_cf, save_waves)
 
@@ -80,11 +77,15 @@ back_digirange = cp.repeat(_back_digirange[cp.newaxis, :], nevents, axis=0)
 
 for index, row in map.iterrows():
   if row.board==0:
-    if row.ch<32: mul = 2000/4096.
-    else: mul = 1000/4096.
-    series_waves[:, row.ch, :] = cp.asarray(intree[f"wave{row.daqch}"].array(library="np")[offset:offset+nevents, :])*mul
+    if row.daqch<32:
+      series_waves[:, row.ch, :] = digi0_waves[:, (nsamples+7)*row.daqch+5:(nsamples+7)*(row.daqch+1)-2]
+    else:
+      series_waves[:, row.ch, :] = digi1_waves[:, (nsamples+7)*(row.daqch-32)+5:(nsamples+7)*(row.daqch+1-32)-2]
   else:
-    parallel_waves[:, row.ch, :] = cp.asarray(intree[f"wave{row.daqch}"].array(library="np")[offset:offset+nevents, :])*mul
+    if row.daqch<32:
+      parallel_waves[:, row.ch, :] = digi0_waves[:, (nsamples+7)*row.daqch+5:(nsamples+7)*(row.daqch+1)-2]
+    else:
+      parallel_waves[:, row.ch, :] = digi1_waves[:, (nsamples+7)*(row.daqch-32)+5:(nsamples+7)*(row.daqch+1-32)-2]
 
 series_board_reco = gpu_routines.get_reco_products(series_waves, seriessignalstart, seriessignalend, seriesriseend, charge_thr_for_series, samplingrate, nsamples, seriespseudotime_cf, save_waves)
 del series_waves
