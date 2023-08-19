@@ -59,9 +59,9 @@ intree = uproot.open(f"{infilename}:t")
 nevents = min(intree.num_entries, maxevents)
 
 cindy_waves = cp.zeros((nevents, 3, nsamples))
-cindy_waves[:, 0, :] = cp.asarray(intree[f"wave{ch_cindysx}"].array(library="np")[offset:offset+nevents, :])*2000/4096 #in mV
-cindy_waves[:, 1, :] = cp.asarray(intree[f"wave{ch_cindydx}"].array(library="np")[offset:offset+nevents, :])*2000/4096
-cindy_waves[:, 2, :] = cp.asarray(intree[f"wave{ch_cindycopy}"].array(library="np")[offset:offset+nevents, :])*1000/4096 #sta sull'altro digitizer
+cindy_waves[:, 0, :] = cp.asarray(intree[f"wave{ch_cindysx}"].array(library="np")[offset:offset+nevents, :])*2000/4096  * (-1) #in mV
+cindy_waves[:, 1, :] = cp.asarray(intree[f"wave{ch_cindydx}"].array(library="np")[offset:offset+nevents, :])*2000/4096 * (-1)
+cindy_waves[:, 2, :] = cp.asarray(intree[f"wave{ch_cindycopy}"].array(library="np")[offset:offset+nevents, :])*1000/4096 * (-1) #sta sull'altro digitizer
 
 cindy_reco = gpu_routines.get_reco_products(cindy_waves, cindysignalstart, cindysignalend, cindyriseend, charge_thr_for_cindy, samplingrate, nsamples, cindypseudotime_cf, save_waves)
 
