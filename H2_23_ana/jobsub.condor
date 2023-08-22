@@ -1,0 +1,8 @@
+executable            = condorjob.sh
+arguments             = python3 $ScriptPath $(ProcId) $*
+input                 = input
+output                = $condorfolder/out.$(ClusterId).$(ProcId).out
+error                 = $condorfolder/err.$(ClusterId).$(ProcId).err
+log                   = $condorfolder/log.$(ClusterId).log
++JobFlavour		      = "espresso"
+queue $njobs
